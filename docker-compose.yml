@@ -1,0 +1,30 @@
+services:
+  api:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - mongo
+
+  worker:
+    build: .
+    command: celery -A app.tasks.celery_worker worker --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - mongo
+
+  redis:
+    image: redis:7
+
+  mongo:
+    image: mongo:6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    ports:
+      - "27017:27017"

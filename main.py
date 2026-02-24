@@ -1,16 +1,24 @@
-# This is a sample Python script.
+from fastapi import FastAPI, Depends
+from app.schemas.video import VideoRequest
+from app.tasks.celery_worker import process_video
+from app.core.database import collection
+from app.core.cache import redis_client
+import json
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+app = FastAPI()
 
+@app.post("/detect")
+async def detect_video(request: VideoRequest):
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+    cached = redis_client.get(request.url)
+    if cached:
+        return json.loads(cached)
 
+    db_result = await collection.find_one({"url": request.url})
+    if db_result:
+        redis_client.set(request.url, str(db_result))
+        return db_result
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+    task = process_video.delay(request.url)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    return {"message": "Processing started", "task_id": task.id}
