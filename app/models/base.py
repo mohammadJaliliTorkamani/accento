@@ -1,8 +1,5 @@
-from pydantic import BaseModel, HttpUrl, validator
-import bleach
 from bson import ObjectId
-from pydantic import BaseModel
-from pydantic import EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class PyObjectId(ObjectId):
@@ -18,13 +15,13 @@ class PyObjectId(ObjectId):
 
     @classmethod
     def __get_pydantic_json_schema__(cls, core_schema, handler):
-        # This replaces __modify_schema__ in Pydantic v2
         return {"type": "string"}
 
-class VideoRequest(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    url: HttpUrl
 
-    @validator("url")
-    def sanitize_url(cls, v):
-        return bleach.clean(str(v))
+class MongoModel(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+
+    class Config:
+        populate_by_name = True
+        validate_assignment = True
+        json_encoders = {ObjectId: str}

@@ -1,11 +1,21 @@
 from fastapi import FastAPI, Depends
+
+from app.core import database
 from app.schemas.video import VideoRequest
 from app.tasks.celery_worker import process_video
-from app.core.database import collection
+from app.core.database import collection, db
 from app.core.cache import redis_client
 import json
 
 app = FastAPI()
+
+@app.get("/health")
+async def health_check():
+    collections = await db.list_collection_names()
+    return {
+        "status": "OK",
+        "collections": collections
+    }
 
 @app.post("/detect")
 async def detect_video(request: VideoRequest):
