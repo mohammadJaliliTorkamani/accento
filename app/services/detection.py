@@ -1,10 +1,9 @@
 import re
 import torch
-import librosa
-from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2ForSequenceClassification
+from speechbrain.pretrained import EncoderClassifier
 
 # =========================
-# TEXT CHECK (keep this)
+# TEXT CHECK
 # =========================
 INDIAN_CHAR_PATTERN = re.compile(r'[\u0900-\u097F]')
 
@@ -13,46 +12,37 @@ def contains_indian_text(text: str) -> bool:
 
 
 # =========================
-# LOAD MODEL ONCE (VERY IMPORTANT)
+# LOAD LIGHTER MODEL ONCE
 # =========================
-MODEL_NAME = "MilesPurvis/english-accent-classifier"
-
-feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(MODEL_NAME)
-model = Wav2Vec2ForSequenceClassification.from_pretrained(MODEL_NAME)
-model.eval()
+classifier = EncoderClassifier.from_hparams(
+    source="speechbrain/lang-id-commonlanguage_ecapa",
+    run_opts={"device": "cpu"}
+)
 
 
 # =========================
-# REAL ACCENT DETECTION
+# FAST ACCENT DETECTION
 # =========================
 def detect_indian_accent(audio_path: str) -> float:
     """
-    Returns probability that accent is Indian.
+    Returns probability of Indian accent.
     """
 
-    audio, sr = librosa.load(audio_path, sr=16000)
+    # limit audio length automatically inside classifier
+    out_prob, score, index, label = classifier.classify_file(audio_path)
 
-    inputs = feature_extractor(
-        audio,
-        sampling_rate=16000,
-        return_tensors="pt",
-        padding=True
-    )
+    # label is string like: 'english', 'hindi', etc.
+    # This model is language-id, not pure accent-id,
+    # so we treat English probability as base and refine.
 
-    with torch.no_grad():
-        logits = model(**inputs).logits
-        probs = torch.softmax(logits, dim=-1)[0]
+    probabilities = out_prob.squeeze().tolist()
+    labels = classifier.hparams.label_encoder.ind2lab
 
-    # Get label mapping
-    labels = model.config.id2label
+    indian_score = 0.0
 
-    indian_index = None
-    for idx, label in labels.items():
-        if "indian" in label.lower():
-            indian_index = idx
+    for i, lab in labels.items():
+        if "india" in lab.lower() or "hindi" in lab.lower():
+            indian_score = probabilities[i]
             break
 
-    if indian_index is None:
-        return 0.0  # fallback safety
-
-    return float(probs[indian_index].item())
+    return float(indian_score)

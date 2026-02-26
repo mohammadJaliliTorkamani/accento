@@ -1,3 +1,7 @@
+torch==2.1.0
+torchaudio==2.1.0
+speechbrain==0.5.16
+huggingface_hub==0.16.4
 fastapi
 uvicorn
 pydantic
@@ -11,11 +15,10 @@ motor
 yt-dlp
 ffmpeg-python
 langdetect
-numpy
 scikit-learn
 librosa
 soundfile
 validators
 bleach
-torch
 transformers
+numpy<2
