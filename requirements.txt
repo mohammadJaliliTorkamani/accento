@@ -17,3 +17,5 @@ librosa
 soundfile
 validators
 bleach
+torch
+transformers
