@@ -1,6 +1,11 @@
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import re
 import torch
-from speechbrain.pretrained import EncoderClassifier
+import torch.nn.functional as F
+import soundfile as sf
+from transformers import Wav2Vec2ForSequenceClassification
 
 # =========================
 # TEXT CHECK
@@ -12,37 +17,60 @@ def contains_indian_text(text: str) -> bool:
 
 
 # =========================
-# LOAD LIGHTER MODEL ONCE
+# LOAD MODEL (SAFE VERSION)
 # =========================
-classifier = EncoderClassifier.from_hparams(
-    source="speechbrain/lang-id-commonlanguage_ecapa",
-    run_opts={"device": "cpu"}
-)
+_MODEL = None
+
+def get_accent_model():
+    global _MODEL
+
+    if _MODEL is None:
+        torch.set_num_threads(1)
+
+        model_name = "dima806/english_accents_classification"
+
+        _MODEL = Wav2Vec2ForSequenceClassification.from_pretrained(model_name)
+
+        _MODEL.eval()
+        _MODEL.to("cpu")  # Force CPU to avoid Docker/GPU crashes
+
+    return _MODEL
 
 
 # =========================
-# FAST ACCENT DETECTION
+# ACCENT DETECTION
 # =========================
-def detect_indian_accent(audio_path: str) -> float:
+def detect_indian_accent(audio_path: str, max_seconds: int = 15) -> float:
     """
-    Returns probability of Indian accent.
+    Returns probability (0–1) that the audio contains an Indian English accent.
     """
 
-    # limit audio length automatically inside classifier
-    out_prob, score, index, label = classifier.classify_file(audio_path)
+    model = get_accent_model()
 
-    # label is string like: 'english', 'hindi', etc.
-    # This model is language-id, not pure accent-id,
-    # so we treat English probability as base and refine.
+    # Load audio safely (avoids librosa segfault issues)
+    waveform, sr = sf.read(audio_path)
 
-    probabilities = out_prob.squeeze().tolist()
-    labels = classifier.hparams.label_encoder.ind2lab
+    # Convert to mono if needed
+    if len(waveform.shape) > 1:
+        waveform = waveform.mean(axis=1)
 
-    indian_score = 0.0
+    # Limit duration
+    waveform = waveform[: max_seconds * sr]
 
-    for i, lab in labels.items():
-        if "india" in lab.lower() or "hindi" in lab.lower():
-            indian_score = probabilities[i]
-            break
+    # Convert to tensor
+    waveform = torch.tensor(waveform, dtype=torch.float32).unsqueeze(0)
 
-    return float(indian_score)
+    with torch.no_grad():
+        outputs = model(waveform)
+        logits = outputs.logits
+        probs = F.softmax(logits, dim=-1)[0]
+
+    # Sum probabilities of labels containing "indian"
+    id2label = model.config.id2label
+    indian_probability = 0.0
+
+    for i, prob in enumerate(probs):
+        if "indian" in id2label[i].lower():
+            indian_probability += float(prob)
+
+    return float(min(max(indian_probability, 0.0), 1.0))

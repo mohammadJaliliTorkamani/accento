@@ -20,5 +20,5 @@ librosa
 soundfile
 validators
 bleach
+numpy==1.26.4
 transformers
-numpy<2
