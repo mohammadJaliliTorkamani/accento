@@ -4,6 +4,7 @@ from app.services.youtube import get_video_info, download_audio
 from app.services.detection import contains_indian_text, detect_indian_accent
 from app.core.database import collection
 from app.core.cache import redis_client
+import json
 
 celery = Celery(
     "tasks",
@@ -44,6 +45,6 @@ def process_video(url: str):
         }
 
     collection.insert_one({"url": url, **result})
-    redis_client.set(url, str(result))
+    redis_client.set(url, json.dumps(result))
 
     return result

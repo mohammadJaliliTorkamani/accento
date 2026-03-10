@@ -1,7 +1,7 @@
-torch==2.1.0
-torchaudio==2.1.0
+torch==2.1.2
+torchaudio==2.1.2
+transformers==4.36.2
 speechbrain==0.5.16
-huggingface_hub==0.16.4
 fastapi
 uvicorn
 pydantic
@@ -17,8 +17,6 @@ ffmpeg-python
 langdetect
 scikit-learn
 librosa
-soundfile
 validators
 bleach
 numpy==1.26.4
-transformers

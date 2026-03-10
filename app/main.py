@@ -1,5 +1,7 @@
-import json
+import os
+os.environ["HF_HOME"] = "/tmp/huggingface"
 
+import json
 from fastapi import FastAPI
 
 from app.core.cache import redis_client
@@ -21,15 +23,31 @@ async def health_check():
 
 @app.post("/detect")
 async def detect_video(request: VideoRequest):
+
     cached = redis_client.get(request.url)
+
     if cached:
-        return json.loads(cached)
+        try:
+            return json.loads(cached.decode())
+        except Exception:
+            redis_client.delete(request.url)
 
     db_result = await collection.find_one({"url": request.url})
+
     if db_result:
-        redis_client.set(request.url, str(db_result))
+        db_result["_id"] = str(db_result["_id"])
+
+        redis_client.set(
+            request.url,
+            json.dumps(db_result),
+            ex=3600
+        )
+
         return db_result
 
     task = process_video.delay(request.url)
 
-    return {"message": "Processing started", "task_id": task.id}
+    return {
+        "message": "Processing started",
+        "task_id": task.id
+    }

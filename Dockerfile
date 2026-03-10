@@ -6,7 +6,10 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # 1. Install system dependencies (FFmpeg)
+
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    libsndfile1 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
