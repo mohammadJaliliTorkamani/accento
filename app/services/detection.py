@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 from transformers import Wav2Vec2FeatureExtractor
 from transformers import Wav2Vec2ForSequenceClassification
+from faster_whisper import WhisperModel
 
 os.environ["HF_HOME"] = "/tmp/huggingface"
 os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
@@ -26,8 +27,32 @@ def contains_indian_text(text: str) -> bool:
 # =========================
 
 _MODEL = None
+_LANG_MODEL = None
 _FEATURE_EXTRACTOR = None
 
+def get_language_model():
+    global _LANG_MODEL
+
+    if _LANG_MODEL is None:
+        print("Loading language detection model...")
+        _LANG_MODEL = WhisperModel(
+            "tiny",
+            device="cpu",
+            compute_type="int8"
+        )
+
+    return _LANG_MODEL
+
+def detect_language(audio_path: str):
+
+    model = get_language_model()
+
+    segments, info = model.transcribe(
+        audio_path,
+        beam_size=1
+    )
+
+    return info.language
 
 def get_accent_model():
     global _MODEL, _FEATURE_EXTRACTOR

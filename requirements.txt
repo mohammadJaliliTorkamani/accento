@@ -18,5 +18,6 @@ langdetect
 scikit-learn
 librosa
 validators
+faster-whisper
 bleach
 numpy==1.26.4
