@@ -44,7 +44,17 @@ def process_video(url: str):
             "confidence": confidence
         }
 
-    collection.insert_one({"url": url, **result})
-    redis_client.set(url, json.dumps(result))
+    doc = {
+        "url": url,
+        "status": "done",
+        **result
+    }
+
+    collection.update_one(
+        {"url": url},
+        {"$set": doc}
+    )
+
+    redis_client.set(url, json.dumps(doc), ex=3600)
 
     return result

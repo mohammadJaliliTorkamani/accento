@@ -11,7 +11,7 @@ services:
 
   worker:
     build: .
-    command: celery -A app.tasks.celery_worker worker --loglevel=info  --concurrency=1 --pool=solo
+    command: celery -A app.tasks.celery_worker worker --loglevel=WARNING  --concurrency=1 --pool=solo
     env_file:
       - .env
     depends_on:
