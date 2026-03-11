@@ -3,10 +3,12 @@ import os
 from bson import json_util
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.logger import logger
+
 os.environ["HF_HOME"] = "/tmp/huggingface"
 
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.core.cache import redis_client
 from app.core.database import collection, db
@@ -16,9 +18,9 @@ from app.tasks.celery_worker import process_video
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # or ["https://www.youtube.com"] for stricter
-    allow_methods=["*"],       # allow POST, GET, OPTIONS, etc.
-    allow_headers=["*"],       # allow Content-Type, Authorization, etc.
+    allow_origins=["*"],  # or ["https://www.youtube.com"] for stricter
+    allow_methods=["*"],  # allow POST, GET, OPTIONS, etc.
+    allow_headers=["*"],  # allow Content-Type, Authorization, etc.
 )
 
 
@@ -38,7 +40,7 @@ async def detect_video(request: VideoRequest):
     cached = await redis_client.get(url)
 
     if cached:
-        print("Found in Cache", json.loads(cached))
+        logger.info("Cache hit for %s", url)
         return json.loads(cached)
 
     db_result = await collection.find_one({"url": url})
@@ -48,7 +50,7 @@ async def detect_video(request: VideoRequest):
 
         await redis_client.set(url, json.dumps(db_result), ex=3600)
 
-        print("Found in db! ", db_result)
+        logger.info("DB hit for %s", url)
         return db_result
 
     await collection.insert_one({
@@ -65,7 +67,9 @@ async def detect_video(request: VideoRequest):
 
 @app.post("/detect/batch")
 async def detect_batch(data: dict):
-    urls = data.get("urls", [])
+    urls = list(set(data.get("urls", [])))
+    if len(urls) > 100:
+        raise HTTPException(400, "Too many URLs")
 
     results = {}
 
@@ -89,10 +93,11 @@ async def detect_batch(data: dict):
 
         else:
 
-            await collection.insert_one({
-                "url": url,
-                "status": "processing"
-            })
+            await collection.update_one(
+                {"url": url},
+                {"$setOnInsert": {"status": "processing"}},
+                upsert=True
+            )
 
             process_video.delay(url)
 

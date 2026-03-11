@@ -1,8 +1,8 @@
-from pydantic import BaseModel, HttpUrl, validator
 import bleach
 from bson import ObjectId
 from pydantic import BaseModel
-from pydantic import EmailStr, Field
+from pydantic import Field
+from pydantic import HttpUrl, validator
 
 
 class PyObjectId(ObjectId):
@@ -20,6 +20,7 @@ class PyObjectId(ObjectId):
     def __get_pydantic_json_schema__(cls, core_schema, handler):
         # This replaces __modify_schema__ in Pydantic v2
         return {"type": "string"}
+
 
 class VideoRequest(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")

@@ -1,4 +1,9 @@
+import tempfile
+
 import yt_dlp
+
+from app.core.logger import logger
+
 
 def get_video_info(url: str):
     with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
@@ -11,26 +16,37 @@ def get_video_info(url: str):
             "live_status": info.get("live_status")
         }
 
-def download_audio(url: str, output_path: str, max_seconds: int = 15):
 
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": output_path + ".%(ext)s",
+def download_audio(url: str, max_seconds: int = 15) -> str:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        output_path = f.name
 
-        "postprocessor_args": [
-            "-ss", "0",
-            "-t", str(max_seconds)
-        ],
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": output_path + ".%(ext)s",
 
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "wav",
-        }],
+            "postprocessor_args": [
+                "-ss", "0",
+                "-t", str(max_seconds)
+            ],
 
-        "noplaylist": True,
-        "quiet": True,
-        "no_warnings": True,
-    }
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "wav",
+            }],
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+            "noplaylist": True,
+            "quiet": True,
+            "no_warnings": True,
+        }
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+                logger.info("Audio downloaded!")
+                return output_path + ".wav"
+
+        except Exception as e:
+            logger.exception("Failed to download audio")
+
+    raise Exception("Something failed while downloading the audio")

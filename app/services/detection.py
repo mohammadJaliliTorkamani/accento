@@ -1,13 +1,14 @@
 import os
-
 import re
-import torch
-import librosa
-import torch.nn.functional as F
 
+import librosa
+import torch
+import torch.nn.functional as F
+from faster_whisper import WhisperModel
 from transformers import Wav2Vec2FeatureExtractor
 from transformers import Wav2Vec2ForSequenceClassification
-from faster_whisper import WhisperModel
+
+from app.core.logger import logger
 
 os.environ["HF_HOME"] = "/tmp/huggingface"
 os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
@@ -18,7 +19,10 @@ os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
 
 INDIAN_CHAR_PATTERN = re.compile(r'[\u0900-\u097F]')
 
+
 def contains_indian_text(text: str) -> bool:
+    if not text:
+        return False
     return bool(INDIAN_CHAR_PATTERN.search(text))
 
 
@@ -30,11 +34,12 @@ _MODEL = None
 _LANG_MODEL = None
 _FEATURE_EXTRACTOR = None
 
+
 def get_language_model():
     global _LANG_MODEL
 
     if _LANG_MODEL is None:
-        print("Loading language detection model...")
+        logger.info("Loading language detection model...")
         _LANG_MODEL = WhisperModel(
             "tiny",
             device="cpu",
@@ -43,23 +48,23 @@ def get_language_model():
 
     return _LANG_MODEL
 
-def detect_language(audio_path: str):
 
+def detect_language(audio_path: str):
     model = get_language_model()
 
-    segments, info = model.transcribe(
+    _, info = model.transcribe(
         audio_path,
         beam_size=1
     )
 
     return info.language
 
+
 def get_accent_model():
     global _MODEL, _FEATURE_EXTRACTOR
 
     if _MODEL is None:
-
-        print("Loading lightweight accent model...")
+        logger.info("Loading lightweight accent model...")
 
         torch.set_num_threads(1)
 
@@ -74,7 +79,7 @@ def get_accent_model():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         _MODEL.to(device)
 
-        print("Model ready.")
+        logger.info("Model ready.")
 
     return _MODEL, _FEATURE_EXTRACTOR
 
@@ -84,14 +89,13 @@ def get_accent_model():
 # =========================
 
 def detect_indian_accent(audio_path: str, max_seconds: int = 10) -> float:
-    print("Detecting...")
+    logger.info("Detecting...")
     """
     Returns probability (0–1) that the speaker has Indian English accent.
     """
 
-
     model, extractor = get_accent_model()
-    print("Model loaded")
+    logger.info("Model loaded")
 
     # Load audio
     audio, sr = librosa.load(audio_path, sr=16000)
@@ -118,7 +122,7 @@ def detect_indian_accent(audio_path: str, max_seconds: int = 10) -> float:
 
     # find indian class
     id2label = model.config.id2label
-    print(id2label)
+    logger.info(id2label)
 
     indian_prob = 0.0
 

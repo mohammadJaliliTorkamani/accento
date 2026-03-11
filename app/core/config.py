@@ -1,7 +1,9 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 class Settings:
     APP_NAME = os.getenv("APP_NAME")
@@ -22,5 +24,6 @@ class Settings:
 
     TEMP_AUDIO_DIR = os.getenv("TEMP_AUDIO_DIR")
     ACCENT_THRESHOLD = float(os.getenv("ACCENT_THRESHOLD"))
+
 
 settings = Settings()

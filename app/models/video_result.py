@@ -1,5 +1,7 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, HttpUrl
+
+from pydantic import Field, HttpUrl
+
 from app.models.base import MongoModel
 
 
