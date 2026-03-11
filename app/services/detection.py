@@ -91,7 +91,7 @@ def detect_indian_accent(audio_path: str, max_seconds: int = 10) -> float:
 
 
     model, extractor = get_accent_model()
-    print("Model loaded",model)
+    print("Model loaded")
 
     # Load audio
     audio, sr = librosa.load(audio_path, sr=16000)

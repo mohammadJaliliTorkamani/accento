@@ -3,7 +3,7 @@
 const MAX_QUEUE_LENGTH = 50;        // maximum videos stored
 const BATCH_SIZE = 3;               // videos per API request
 const POLL_INTERVAL = 4000;         // queue check interval
-const RECHECK_DELAY = 15000;        // recheck processing videos
+const RECHECK_DELAY = 8000;        // recheck processing videos
 const LONG_VIDEO_THRESHOLD = 20 * 60; // 20 minutes
 
 

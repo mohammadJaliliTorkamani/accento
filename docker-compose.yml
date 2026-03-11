@@ -23,6 +23,13 @@ services:
 
   mongo:
     image: mongo:6
+    command:
+      [
+        "mongod",
+        "--quiet",
+        "--setParameter",
+        "logComponentVerbosity={network: {verbosity: -1}}"
+      ]
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin123
