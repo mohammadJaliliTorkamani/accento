@@ -340,7 +340,7 @@ Example:
 
 # Chrome Extension
 
-This backend is designed to support a **YouTube browser extension** that
+This backend is designed to support a **YouTube Chrome browser extension** that
 can:
 
 -   Analyze videos on a YouTube page
