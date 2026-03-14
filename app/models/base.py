@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class PyObjectId(ObjectId):
+
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
@@ -19,9 +20,9 @@ class PyObjectId(ObjectId):
 
 
 class MongoModel(BaseModel):
+
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
     class Config:
         populate_by_name = True
-        validate_assignment = True
         json_encoders = {ObjectId: str}

@@ -1,6 +1,8 @@
 services:
+
   api:
     build: .
+    container_name: accento-api
     env_file:
       - .env
     ports:
@@ -8,21 +10,27 @@ services:
     depends_on:
       - redis
       - mongo
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   worker:
     build: .
-    command: celery -A app.tasks.celery_worker worker --loglevel=WARNING  --concurrency=1 --pool=solo
+    container_name: accento-worker
     env_file:
       - .env
+    command: celery -A app.workers.celery_worker worker --loglevel=INFO --concurrency=1 --pool=solo
     depends_on:
       - redis
       - mongo
 
   redis:
     image: redis:7
+    container_name: accento-redis
+    ports:
+      - "6379:6379"
 
   mongo:
     image: mongo:6
+    container_name: accento-mongo
     command:
       [
         "mongod",
@@ -35,3 +43,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin123
     ports:
       - "27017:27017"
+
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

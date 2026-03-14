@@ -1,29 +1,36 @@
 import os
-
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 class Settings:
-    APP_NAME = os.getenv("APP_NAME")
-    ENV = os.getenv("ENV")
-    DEBUG = os.getenv("DEBUG") == "True"
+    APP_NAME = os.getenv("APP_NAME", "accento")
 
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    ALGORITHM = os.getenv("ALGORITHM")
-    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    DEBUG = os.getenv("DEBUG", "False") == "True"
 
     MONGO_URL = os.getenv("MONGO_URL")
-    MONGO_DB = os.getenv("MONGO_DB")
+    MONGO_DB = os.getenv("MONGO_DB", "accento")
 
     REDIS_URL = os.getenv("REDIS_URL")
 
     CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
     CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
-    TEMP_AUDIO_DIR = os.getenv("TEMP_AUDIO_DIR")
-    ACCENT_THRESHOLD = float(os.getenv("ACCENT_THRESHOLD"))
+    ACCENT_THRESHOLD = float(os.getenv("ACCENT_THRESHOLD", 0.6))
+
+    TEMP_AUDIO_DIR = os.getenv("TEMP_AUDIO_DIR", "/tmp")
+
+    SUPPORTED_ACCENTS = [
+        "american",
+        "british",
+        "indian",
+        "australian",
+        "canadian",
+        "irish",
+        "south_african",
+        "other"
+    ]
 
 
 settings = Settings()

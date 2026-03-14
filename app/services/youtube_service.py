@@ -1,12 +1,13 @@
 import tempfile
-
 import yt_dlp
 
 from app.core.logger import logger
 
 
 def get_video_info(url: str):
+
     with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+
         info = ydl.extract_info(url, download=False)
 
         return {
@@ -17,36 +18,36 @@ def get_video_info(url: str):
         }
 
 
-def download_audio(url: str, max_seconds: int = 15) -> str:
+def download_audio(url: str, seconds: int = 15):
+
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        output_path = f.name
 
-        ydl_opts = {
+        output = f.name
+
+        opts = {
             "format": "bestaudio/best",
-            "outtmpl": output_path + ".%(ext)s",
-
+            "outtmpl": output + ".%(ext)s",
             "postprocessor_args": [
                 "-ss", "0",
-                "-t", str(max_seconds)
+                "-t", str(seconds)
             ],
-
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": "wav",
+                "preferredcodec": "wav"
             }],
-
             "noplaylist": True,
-            "quiet": True,
-            "no_warnings": True,
+            "quiet": True
         }
 
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+            with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([url])
-                logger.info("Audio downloaded!")
-                return output_path + ".wav"
 
-        except Exception as e:
-            logger.exception("Failed to download audio")
+            return output + ".wav"
 
-    raise Exception("Something failed while downloading the audio")
+        except Exception:
+
+            logger.exception("Audio download failed")
+
+            raise
