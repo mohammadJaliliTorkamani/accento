@@ -338,7 +338,7 @@ Example:
 
 ------------------------------------------------------------------------
 
-# Chrome Extension Integration (Planned)
+# Chrome Extension
 
 This backend is designed to support a **YouTube browser extension** that
 can:
@@ -365,7 +365,6 @@ Potential enhancements include:
 -   GPU acceleration for faster inference
 -   Subtitle-based pre-analysis to reduce compute
 -   User-configurable accent filters
--   Browser extension integration
 -   Rate limiting and API authentication
 -   Model upgrades for higher accuracy
 -   Observability tools (Prometheus + Grafana)
