@@ -34,24 +34,15 @@ inference to create a **high-performance video analysis pipeline**.
 
 # Key Capabilities
 
--   **Automatic Accent Detection**
-    -   Detects English accents using deep learning speech models
--   **YouTube Audio Processing**
-    -   Extracts audio from YouTube videos for analysis
--   **Language Detection**
-    -   Automatically determines spoken language before accent
-        classification
--   **Async Video Processing**
-    -   Long-running ML tasks run in the background via Celery
--   **High Performance Caching**
-    -   Redis prevents duplicate processing of previously analyzed
-        videos
--   **Batch Processing**
-    -   Analyze multiple videos in a single request
--   **Chrome Extension Integration**
-    -   Designed to support browser extensions that visually filter
-        YouTube content
-
+| Capability | Description |
+|---|---|
+| Automatic Accent Detection | Detects English accents using deep learning speech models |
+| YouTube Audio Processing | Extracts audio from YouTube videos for analysis |
+| Language Detection | Automatically determines spoken language before accent classification |
+| Async Video Processing | Long-running ML tasks run in the background via Celery |
+| High Performance Caching | Redis prevents duplicate processing of previously analyzed videos |
+| Batch Processing | Analyze multiple videos in a single request |
+| Chrome Extension Integration | Designed to support browser extensions that visually filter YouTube content |
 ------------------------------------------------------------------------
 
 # Architecture Overview
@@ -79,47 +70,31 @@ inference to create a **high-performance video analysis pipeline**.
             |  Redis Cache |
             +-------------+
 
-**Flow**
+## Flow
 
-1.  Client sends video URL to FastAPI
-2.  API checks Redis cache
-3.  If not cached → check MongoDB
-4.  If not processed → queue Celery task
-5.  Worker downloads video audio
-6.  Whisper detects language
-7.  Wav2Vec2 predicts accent distribution
-8.  Results stored in MongoDB
+1.  Client sends video URL to FastAPI\
+2.  API checks Redis cache\
+3.  If not cached → check MongoDB\
+4.  If not processed → queue Celery task\
+5.  Worker downloads video audio\
+6.  Whisper detects language\
+7.  Wav2Vec2 predicts accent distribution\
+8.  Results stored in MongoDB\
 9.  Redis caches results for fast retrieval
 
 ------------------------------------------------------------------------
 
-# Tech Stack
-
-  --------------------------------------------------------------------------
-  Layer              Technology                     Purpose
-  ------------------ ------------------------------ ------------------------
-  API                FastAPI                        Asynchronous REST API
-
-  Database           MongoDB                        NoSQL storage for
-                                                    analysis results
-
-  Background         Celery + Redis                 Asynchronous ML
-  Processing                                        processing
-
-  ML Framework       PyTorch                        Model inference
-
-  Speech Models      Whisper + Wav2Vec2             Language + Accent
-                                                    detection
-
-  Video Processing   yt-dlp                         YouTube audio extraction
-
-  Caching            Redis                          Prevent duplicate work
-
-  Containerization   Docker + Docker Compose        Multi-service
-                                                    orchestration
-
-  Language           Python 3.10+                   Backend implementation
-  --------------------------------------------------------------------------
+| Layer | Technology | Purpose |
+|---|---|---|
+| API | FastAPI | Asynchronous REST API |
+| Database | MongoDB | NoSQL storage for analysis results |
+| Background Processing | Celery + Redis | Asynchronous ML processing |
+| ML Framework | PyTorch | Model inference |
+| Speech Models | Whisper + Wav2Vec2 | Language and accent detection |
+| Video Processing | yt-dlp | YouTube audio extraction |
+| Caching | Redis | Prevent duplicate work |
+| Containerization | Docker + Docker Compose | Multi-service orchestration |
+| Language | Python 3.10+ | Backend implementation |
 
 ------------------------------------------------------------------------
 
@@ -129,16 +104,18 @@ inference to create a **high-performance video analysis pipeline**.
 
 Detects the most likely accent of a speaker in English speech.
 
-Supported accents include:
+### Supported Accents
 
--   American
--   British
--   Indian
--   Australian
--   Canadian
--   Irish
--   South African
--   Other
+  Accent
+  ---------------
+  American
+  British
+  Indian
+  Australian
+  Canadian
+  Irish
+  South African
+  Other
 
 Each prediction returns:
 
@@ -217,7 +194,7 @@ This dramatically improves performance for repeated requests.
     │
     │   └── main.py
     │
-    ├── extension/           # Chrome extension (future)
+    ├── extension/
     ├── docker-compose.yml
     ├── Dockerfile
     ├── requirements.txt
@@ -240,7 +217,6 @@ This dramatically improves performance for repeated requests.
 Create `.env`
 
     APP_NAME=accento
-
     DEBUG=True
 
     MONGO_URL=mongodb://admin:admin123@mongo:27017
@@ -252,7 +228,6 @@ Create `.env`
     CELERY_RESULT_BACKEND=redis://redis:6379/0
 
     ACCENT_THRESHOLD=0.6
-
     TEMP_AUDIO_DIR=/tmp
 
 ------------------------------------------------------------------------
@@ -265,12 +240,12 @@ Run:
 
 This launches:
 
-  Service         Purpose
-  --------------- ----------------------
-  FastAPI         REST API
-  Celery Worker   ML processing
-  Redis           Task queue + caching
-  MongoDB         Persistent storage
+| Service | Purpose |
+|---|---|
+| FastAPI | REST API |
+| Celery Worker | ML processing |
+| Redis | Task queue and caching |
+| MongoDB | Persistent storage |
 
 ------------------------------------------------------------------------
 
@@ -340,8 +315,8 @@ Example:
 
 # Chrome Extension
 
-This backend is designed to support a **YouTube Chrome browser extension** that
-can:
+This backend is designed to support a **YouTube Chrome browser
+extension** that can:
 
 -   Analyze videos on a YouTube page
 -   Detect speaker accents
