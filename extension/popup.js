@@ -1,59 +1,73 @@
-const ACCENTS = [
+document.addEventListener("DOMContentLoaded", () => {
+
+  const ACCENTS = [
     "american", "british", "indian", "australian", "canadian", "irish", "south_african"
-];
+  ];
 
-const LANGUAGES = [
+  const LANGUAGES = [
     "english", "spanish", "french", "german", "hindi", "mandarin", "arabic"
-];
+  ];
 
-function createCheckbox(container, value, checked) {
-    const label = document.createElement("label");
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = value;
-    cb.checked = checked;
-
-    label.appendChild(cb);
-    label.append(" " + capitalize(value));
-    container.appendChild(label);
-}
-
-function capitalize(str) {
+  function capitalize(str) {
     return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
+  }
 
-function loadSettings() {
+  function createToggle(container, value, active) {
+    const div = document.createElement("div");
+    div.className = "toggle" + (active ? " active" : "");
+
+    const label = document.createElement("span");
+    label.textContent = capitalize(value);
+
+    const slider = document.createElement("div");
+    slider.className = "slider";
+
+    div.appendChild(label);
+    div.appendChild(slider);
+
+    div.onclick = () => div.classList.toggle("active");
+
+    div.dataset.value = value;
+    container.appendChild(div);
+  }
+
+  function loadSettings() {
     chrome.storage.sync.get(["allowedAccents", "allowedLanguages"], (data) => {
-        const allowedAccents = data.allowedAccents || ACCENTS;
-        const allowedLanguages = data.allowedLanguages || LANGUAGES;
+      const allowedAccents = data.allowedAccents || ACCENTS;
+      const allowedLanguages = data.allowedLanguages || LANGUAGES;
 
-        const accentContainer = document.getElementById("accent-list");
-        const langContainer = document.getElementById("language-list");
+      const accentContainer = document.getElementById("accent-list");
+      const langContainer = document.getElementById("language-list");
 
-        accentContainer.innerHTML = "";
-        langContainer.innerHTML = "";
+      accentContainer.innerHTML = "";
+      langContainer.innerHTML = "";
 
-        ACCENTS.forEach(a => createCheckbox(accentContainer, a, allowedAccents.includes(a)));
-        LANGUAGES.forEach(l => createCheckbox(langContainer, l, allowedLanguages.includes(l)));
+      ACCENTS.forEach(a => createToggle(accentContainer, a, allowedAccents.includes(a)));
+      LANGUAGES.forEach(l => createToggle(langContainer, l, allowedLanguages.includes(l)));
     });
-}
+  }
 
-function saveSettings() {
-    const selectedAccents = Array.from(document.querySelectorAll("#accent-list input[type=checkbox]"))
-                                .filter(cb => cb.checked).map(cb => cb.value);
+  function saveSettings() {
+    const accentContainer = document.getElementById("accent-list");
+    const langContainer = document.getElementById("language-list");
 
-    const selectedLanguages = Array.from(document.querySelectorAll("#language-list input[type=checkbox]"))
-                                .filter(cb => cb.checked).map(cb => cb.value);
+    const selectedAccents = Array.from(accentContainer.children)
+      .filter(div => div.classList.contains("active"))
+      .map(div => div.dataset.value);
+
+    const selectedLanguages = Array.from(langContainer.children)
+      .filter(div => div.classList.contains("active"))
+      .map(div => div.dataset.value);
 
     chrome.storage.sync.set({
-        allowedAccents: selectedAccents,
-        allowedLanguages: selectedLanguages
+      allowedAccents: selectedAccents,
+      allowedLanguages: selectedLanguages
     });
 
     window.close();
-}
+  }
 
-document.getElementById("save").onclick = saveSettings;
+  document.getElementById("save").onclick = saveSettings;
 
-loadSettings();
+  loadSettings();
+});
