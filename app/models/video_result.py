@@ -7,7 +7,6 @@ from app.models.base import MongoModel
 
 
 class VideoResult(MongoModel):
-
     url: HttpUrl
 
     accent: str

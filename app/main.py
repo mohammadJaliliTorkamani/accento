@@ -19,5 +19,4 @@ app.include_router(health.router)
 
 @app.on_event("startup")
 async def startup():
-
     await create_indexes()

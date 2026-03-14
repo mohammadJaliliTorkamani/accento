@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Accent Filter</title>
-    <link rel="stylesheet" href="popup.css">
+    <link href="popup.css" rel="stylesheet">
 </head>
 <body>
 <div class="popup-container">
@@ -11,13 +11,13 @@
 
     <div class="sections-row">
         <div class="section"><h3>Languages</h3>
-            <div id="language-list" class="accent-list scrollable"></div>
+            <div class="accent-list scrollable" id="language-list"></div>
         </div>
         <div class="section"><h3>Accents</h3>
-            <div id="accent-list" class="accent-list scrollable"></div>
+            <div class="accent-list scrollable" id="accent-list"></div>
         </div>
     </div>
-    <button id="save" class="save-btn">Save</button>
+    <button class="save-btn" id="save">Save</button>
 </div>
 
 <script src="popup.js"></script>

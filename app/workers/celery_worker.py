@@ -12,5 +12,4 @@ celery = Celery(
 
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True)
 def process_video_task(self, url: str):
-
     return process_video(url)

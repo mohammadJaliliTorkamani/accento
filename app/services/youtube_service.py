@@ -1,13 +1,12 @@
 import tempfile
+
 import yt_dlp
 
 from app.core.logger import logger
 
 
 def get_video_info(url: str):
-
     with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
-
         info = ydl.extract_info(url, download=False)
 
         return {
@@ -19,7 +18,6 @@ def get_video_info(url: str):
 
 
 def download_audio(url: str, seconds: int = 15):
-
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
 
         output = f.name

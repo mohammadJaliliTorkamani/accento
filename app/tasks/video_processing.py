@@ -1,21 +1,18 @@
-import os
 import json
+import os
 
-from app.core.database import collection
 from app.core.cache_sync import redis_client_sync
+from app.core.database import collection
 from app.core.logger import logger
-
+from app.services.accent_service import detect_accent
+from app.services.language_service import detect_language
 from app.services.youtube_service import (
     get_video_info,
     download_audio
 )
 
-from app.services.language_service import detect_language
-from app.services.accent_service import detect_accent
-
 
 def process_video(url: str):
-
     audio_path = None
 
     try:
@@ -75,5 +72,4 @@ def process_video(url: str):
     finally:
 
         if audio_path and os.path.exists(audio_path):
-
             os.remove(audio_path)

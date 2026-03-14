@@ -1,116 +1,116 @@
 html, body {
-  margin: 0;
-  padding: 0;
-  background: #f9f9f9;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f9f9f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Popup width */
 .popup-container {
-  width: 520px;
-  padding: 20px;
-  box-sizing: border-box;
+    width: 520px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 /* Title */
 h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 22px;
-  color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: #333;
 }
 
 /* Horizontal sections */
 .sections-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
 /* Each section */
 .section {
-  flex: 1;
+    flex: 1;
 }
 
 /* Section titles */
 .section h3 {
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #555;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
 }
 
 /* Scroll areas */
 .scrollable {
-  max-height: 260px;
-  overflow-y: auto;
+    max-height: 260px;
+    overflow-y: auto;
 }
 
 /* Toggle list */
 .accent-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 /* Toggle row */
 .toggle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .toggle span {
-  font-size: 14px;
-  color: #333;
+    font-size: 14px;
+    color: #333;
 }
 
 /* Slider */
 .slider {
-  width: 60px;
-  height: 30px;
-  background: #ccc;
-  border-radius: 30px;
-  position: relative;
-  transition: 0.3s;
+    width: 60px;
+    height: 30px;
+    background: #ccc;
+    border-radius: 30px;
+    position: relative;
+    transition: 0.3s;
 }
 
 .slider::after {
-  content: "";
-  width: 26px;
-  height: 26px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: 0.3s;
+    content: "";
+    width: 26px;
+    height: 26px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: 0.3s;
 }
 
 .toggle.active .slider {
-  background: #4a90e2;
+    background: #4a90e2;
 }
 
 .toggle.active .slider::after {
-  transform: translateX(30px);
+    transform: translateX(30px);
 }
 
 /* Save button */
 .save-btn {
-  width: 100%;
-  padding: 14px;
-  font-size: 16px;
-  background: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 .save-btn:hover {
-  background: #357ABD;
+    background: #357ABD;
 }

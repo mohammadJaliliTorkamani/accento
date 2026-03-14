@@ -1,7 +1,6 @@
-import torch
 import librosa
+import torch
 import torch.nn.functional as F
-
 from transformers import (
     Wav2Vec2FeatureExtractor,
     Wav2Vec2ForSequenceClassification
@@ -14,11 +13,9 @@ _EXTRACTOR = None
 
 
 def get_model():
-
     global _MODEL, _EXTRACTOR
 
     if _MODEL is None:
-
         logger.info("Loading accent model")
 
         model_name = "MilesPurvis/english-accent-classifier"
@@ -39,7 +36,6 @@ def get_model():
 
 
 def detect_accent(audio_path: str):
-
     model, extractor = get_model()
 
     audio, sr = librosa.load(audio_path, sr=16000)
@@ -58,7 +54,6 @@ def detect_accent(audio_path: str):
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
     with torch.no_grad():
-
         logits = model(**inputs).logits
 
         probs = F.softmax(logits, dim=-1)[0]
@@ -68,7 +63,6 @@ def detect_accent(audio_path: str):
     results = {}
 
     for i, p in enumerate(probs):
-
         results[id2label[i]] = float(p)
 
     top_accent = max(results, key=results.get)
