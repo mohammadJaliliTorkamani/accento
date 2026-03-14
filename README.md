@@ -342,16 +342,3 @@ Potential enhancements include:
 # License
 
 MIT License
-
-------------------------------------------------------------------------
-
-# Author
-
-Developed as a **production-grade backend architecture project**
-demonstrating:
-
--   Modern Python backend design
--   Asynchronous APIs
--   Scalable ML inference pipelines
--   Distributed background processing
--   Containerized deployment
