@@ -1,0 +1,58 @@
+/* General Reset */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 260px;
+    background-color: #f9f9f9;
+}
+
+/* Container for content */
+.popup-container {
+    padding: 15px;
+}
+
+/* Header */
+h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+/* Accent list styling */
+.accent-list label {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 4px;
+}
+
+.accent-list label:hover {
+    background-color: #e0e0e0;
+}
+
+/* Checkbox appearance */
+.accent-list input[type="checkbox"] {
+    margin-right: 10px;
+    accent-color: #4a90e2; /* modern primary color */
+}
+
+/* Save button */
+.save-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #4a90e2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.save-btn:hover {
+    background-color: #357ABD;
+}

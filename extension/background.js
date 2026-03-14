@@ -1,28 +1,41 @@
 const API_URL = "http://127.0.0.1:8000/detect/batch";
 
+console.log("[AccentDetector] Background worker started");
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (!Array.isArray(msg.urls) || !msg.urls.length) {
-        sendResponse({success: false, error: "No URLs provided"});
+
+    console.log("[AccentDetector] Message received:", msg);
+
+    if (msg.type !== "detectVideos") {
+        sendResponse({success: false, error: "Unknown message type"});
         return;
     }
-    if (msg.type === "detectVideos") {
-        (async () => {
-            try {
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({urls: msg.urls})
-                });
-                const data = await res.json();
 
-                console.log("Background API response:", data); // print API result
+    (async () => {
+        try {
+            console.log("[AccentDetector] Sending request to API:", msg.urls);
 
-                sendResponse({success: true, data});
-            } catch (e) {
-                console.error("Background API error", e);
-                sendResponse({success: false, error: e.toString()});
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({urls: msg.urls})
+            });
+
+            let data = await res.json();
+
+// Ensure data is always an object
+            if (!data || typeof data !== "object") {
+                console.warn("[AccentDetector] API returned invalid data, defaulting to {}");
+                data = {};
             }
-        })();
-        return true; // keep port open
-    }
+
+            sendResponse({success: true, data});
+
+        } catch (e) {
+            console.error("[AccentDetector] API error:", e);
+
+            sendResponse({success: false, error: e.toString()});
+        }
+    })();
+    return true; // Keep message channel open
 });

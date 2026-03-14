@@ -1,11 +1,15 @@
 .detector-processing {
-    border: 4px solid yellow !important; /* processing */
+    border: 4px solid yellow !important;
 }
 
-.detector-indian {
-    border: 4px solid red !important; /* Indian */
+.detector-allowed {
+    border: 4px solid green !important;
 }
 
-.detector-nonindian {
-    border: 4px solid green !important; /* Not Indian */
+.detector-blocked {
+    border: 4px solid red !important;
+}
+
+.detector-unknown {
+    border: 4px solid gray !important;
 }
