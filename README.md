@@ -348,14 +348,6 @@ can:
 -   Visually tag videos with borders or labels
 -   Allow users to filter content by accent
 
-Example UI behavior:
-
-  Accent     UI Indicator
-  ---------- ---------------
-  American   Green border
-  British    Blue border
-  Other      Yellow border
-
 ------------------------------------------------------------------------
 
 # Future Improvements
