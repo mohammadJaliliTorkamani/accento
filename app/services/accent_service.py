@@ -1,69 +1,82 @@
-import librosa
+import numpy as np
 import torch
-import torch.nn.functional as F
-from transformers import (
-    Wav2Vec2FeatureExtractor,
-    Wav2Vec2ForSequenceClassification
-)
+import torchaudio
+import onnxruntime as ort
+from transformers import Wav2Vec2FeatureExtractor
 
 from app.core.logger import logger
 
-_MODEL = None
+MODEL_NAME = "MilesPurvis/english-accent-classifier"
+
+_SESSION = None
 _EXTRACTOR = None
+_ID2LABEL = None
 
 
 def get_model():
-    global _MODEL, _EXTRACTOR
+    global _SESSION, _EXTRACTOR, _ID2LABEL
 
-    if _MODEL is None:
-        logger.info("Loading accent model")
+    if _SESSION is None:
 
-        model_name = "MilesPurvis/english-accent-classifier"
-
-        _EXTRACTOR = Wav2Vec2FeatureExtractor.from_pretrained(model_name)
-
-        _MODEL = Wav2Vec2ForSequenceClassification.from_pretrained(model_name)
-
-        _MODEL.eval()
-
-        device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
+        _SESSION = ort.InferenceSession(
+            "/app/app/services/accent_model/accent_model.onnx",
+            providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
         )
 
-        _MODEL.to(device)
+        _EXTRACTOR = Wav2Vec2FeatureExtractor.from_pretrained(MODEL_NAME)
 
-    return _MODEL, _EXTRACTOR
+        from transformers import Wav2Vec2ForSequenceClassification
+        model = Wav2Vec2ForSequenceClassification.from_pretrained(MODEL_NAME)
+
+        _ID2LABEL = model.config.id2label
+
+    return _SESSION, _EXTRACTOR, _ID2LABEL
 
 
 def detect_accent(audio_path: str):
-    model, extractor = get_model()
 
-    audio, sr = librosa.load(audio_path, sr=16000)
+    session, extractor, id2label = get_model()
 
-    audio = audio[: 10 * 16000]
+    logger.info("Loading model...")
+    audio, sr = torchaudio.load(audio_path)
+
+    if sr != 16000:
+        resampler = torchaudio.transforms.Resample(sr, 16000)
+        audio = resampler(audio)
+
+    audio, sr = torchaudio.load(audio_path)
+
+    # ensure mono
+    if audio.shape[0] > 1:
+        audio = audio.mean(dim=0, keepdim=True)
+
+    if sr != 16000:
+        resampler = torchaudio.transforms.Resample(sr, 16000)
+        audio = resampler(audio)
+
+    audio = audio.squeeze().numpy()
+
+    audio = audio[: 5 * 16000]
 
     inputs = extractor(
         audio,
         sampling_rate=16000,
-        return_tensors="pt",
-        padding=True
+        return_tensors="np",
+        padding=False
     )
 
-    device = next(model.parameters()).device
+    ort_inputs = {
+        "input_values": inputs["input_values"].astype("float32")
+    }
 
-    inputs = {k: v.to(device) for k, v in inputs.items()}
+    logits = session.run(None, ort_inputs)[0]
 
-    with torch.no_grad():
-        logits = model(**inputs).logits
+    probs = torch.softmax(torch.tensor(logits), dim=-1)[0].numpy()
 
-        probs = F.softmax(logits, dim=-1)[0]
-
-    id2label = model.config.id2label
-
-    results = {}
-
-    for i, p in enumerate(probs):
-        results[id2label[i]] = float(p)
+    results = {
+        id2label[i]: float(p)
+        for i, p in enumerate(probs)
+    }
 
     top_accent = max(results, key=results.get)
 

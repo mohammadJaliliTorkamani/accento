@@ -17,7 +17,7 @@ def get_video_info(url: str):
         }
 
 
-def download_audio(url: str, seconds: int = 15):
+def download_audio(url: str, seconds: int = 5):
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
 
         output = f.name
