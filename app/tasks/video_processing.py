@@ -2,7 +2,7 @@ import json
 import os
 
 from app.core.cache_sync import redis_client_sync
-from app.core.database import collection
+from app.core.database_sync import collection
 from app.core.logger import logger
 from app.services.accent_service import detect_accent
 from app.services.language_service import detect_language
@@ -13,17 +13,40 @@ from app.services.youtube_service import (
 
 
 def process_video(url: str):
+    logger.info(f"Processing request for {url}")
+
+    cached = redis_client_sync.get(url)
+
+    if cached:
+        logger.info(f"Redis hit for {url}")
+        return json.loads(cached)
+
+    db_result = collection.find_one({"url": url})
+
+    if db_result and db_result.get("status") == "done":
+        logger.info(f"MongoDB hit for {url}")
+
+        redis_client_sync.set(
+            url,
+            json.dumps(db_result, default=str),
+            ex=3600
+        )
+
+        return db_result
+
+    info = get_video_info(url)
     audio_path = None
 
     try:
 
-        info = get_video_info(url)
-
-        if info["is_live"]:
+        if info["is_live"] or info["live_status"] == "is_live":
 
             result = {
-                "status": "skipped",
-                "reason": "live_stream"
+                "status": "done",
+                "url": url,
+                "accent": None,
+                "confidence": 0.0,
+                "reason": "live_stream_skipped"
             }
 
         else:
@@ -32,28 +55,42 @@ def process_video(url: str):
 
             lang = detect_language(audio_path)
 
-            if lang != "en":
+            logger.info(f"Detected language: {lang}")
+
+            if lang.lower() != "en":
 
                 result = {
-                    "status": "non_english"
+                    "status": "done",
+                    "url": url,
+                    "accent": None,
+                    "confidence": 0.0,
+                    "reason": "non_english"
                 }
 
             else:
 
-                accent, confidence, dist = detect_accent(audio_path)
+                accent, confidence, _ = detect_accent(audio_path)
 
                 result = {
                     "status": "done",
+                    "url": url,
                     "accent": accent,
-                    "confidence": confidence,
-                    "distribution": dist
+                    "confidence": confidence
                 }
+
+        # -------------------------
+        # SAVE TO DATABASE
+        # -------------------------
 
         collection.update_one(
             {"url": url},
-            {"$set": {"url": url, **result}},
+            {"$set": result},
             upsert=True
         )
+
+        # -------------------------
+        # SAVE TO REDIS CACHE
+        # -------------------------
 
         redis_client_sync.set(
             url,
@@ -64,12 +101,17 @@ def process_video(url: str):
         return result
 
     except Exception:
+        logger.exception("Video processing failed")
 
-        logger.exception("processing failed")
+        result = {
+            "status": "error",
+            "url": url,
+            "accent": None,
+            "confidence": 0.0
+        }
 
-        return {"status": "error"}
+        return result
 
     finally:
-
         if audio_path and os.path.exists(audio_path):
             os.remove(audio_path)
