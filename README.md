@@ -8,8 +8,8 @@ machine learning.
 
 The system uses a hybrid architecture:
 
--   FastAPI (async) --- handles API requests\
--   Celery workers (sync) --- performs ML processing\
+-   FastAPI (async) --- handles API requests
+-   Celery workers (sync) --- performs ML processing
 -   MongoDB + Redis --- persistence and caching
 
 This design enables instant API responses while heavy processing runs
@@ -48,23 +48,23 @@ asynchronously.
 
 ## Processing Flow
 
-1.  Client sends video URL\
-2.  API checks Redis\
-3.  If not found → checks MongoDB\
-4.  If not found → inserts status = "processing"\
+1.  Client sends video URL
+2.  API checks Redis
+3.  If not found → checks MongoDB
+4.  If not found → inserts status = "processing"
 5.  Celery task is triggered
 
 ### Worker Steps
 
--   Re-checks Redis (cache hit shortcut)\
--   Re-checks MongoDB (idempotency)\
--   Fetches video metadata\
--   Skips live streams\
--   Downloads audio\
--   Detects language\
--   Skips non-English audio\
--   Runs accent detection\
--   Stores result in MongoDB\
+-   Re-checks Redis (cache hit shortcut)
+-   Re-checks MongoDB (idempotency)
+-   Fetches video metadata
+-   Skips live streams
+-   Downloads audio
+-   Detects language
+-   Skips non-English audio
+-   Runs accent detection
+-   Stores result in MongoDB
 -   Caches result in Redis
 
 6.  Client re-requests result
@@ -111,7 +111,7 @@ Detects the most likely accent of English speech.
 
 ### Output Includes
 
--   Predicted accent\
+-   Predicted accent
 -   Confidence score
 
 Full probability distribution is computed internally but not returned in
@@ -134,10 +134,10 @@ API responses.
 
 ### Optimizations
 
--   Early Redis cache lookup\
--   MongoDB fallback\
--   Skip live videos\
--   Skip non-English audio\
+-   Early Redis cache lookup
+-   MongoDB fallback
+-   Skip live videos
+-   Skip non-English audio
 -   Process only \~5 seconds of audio
 
 ------------------------------------------------------------------------
@@ -146,7 +146,7 @@ API responses.
 
     API → Queue → Worker → Store → Cache
 
--   API remains fast\
+-   API remains fast
 -   Workers handle heavy ML tasks
 
 ------------------------------------------------------------------------
@@ -155,8 +155,8 @@ API responses.
 
     Request → Redis → MongoDB → Worker
 
--   Redis = fast lookup\
--   MongoDB = persistent storage\
+-   Redis = fast lookup
+-   MongoDB = persistent storage
 -   Worker = fallback processing
 
 ------------------------------------------------------------------------
@@ -288,22 +288,22 @@ Supports a browser extension that: - Detects accents on YouTube pages\
 
 ## Performance Optimizations
 
--   Redis caching\
--   MongoDB persistence\
--   Early exit for live/non-English\
--   Short audio (\~5 sec)\
--   ONNX runtime for fast inference\
+-   Redis caching
+-   MongoDB persistence
+-   Early exit for live/non-English
+-   Short audio (\~5 sec)
+-   ONNX runtime for fast inference
 -   Background workers
 
 ------------------------------------------------------------------------
 
 ## Future Improvements
 
--   Return full probability distribution\
--   GPU acceleration\
--   Real-time streaming\
--   Distributed workers\
--   Observability (Prometheus + Grafana)\
+-   Return full probability distribution
+-   GPU acceleration
+-   Real-time streaming
+-   Distributed workers
+-   Observability (Prometheus + Grafana)
 -   Authentication & rate limiting
 
 ------------------------------------------------------------------------
