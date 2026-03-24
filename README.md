@@ -1,4 +1,5 @@
-# Accento
+# Accento: AI-Powered Youtube Accent Analysis Backend + Chrome Extension
+
 
 ## Project Overview
 
