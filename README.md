@@ -1,167 +1,171 @@
-# Accento: AI-Powered English Accent Detection Backend
+# Accento
 
-![FastAPI](https://img.shields.io/badge/FastAPI-000000?style=flat&logo=fastapi&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
-![Celery](https://img.shields.io/badge/Celery-89C53C?style=flat&logo=celery&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)
-![HuggingFace](https://img.shields.io/badge/HuggingFace-FFD21E?style=flat&logo=huggingface&logoColor=black)
+## Project Overview
 
-------------------------------------------------------------------------
+Accento is a production-ready AI backend service that analyzes spoken
+English in YouTube videos and classifies the speaker's accent using
+machine learning.
 
-# Project Overview
+The system uses a hybrid architecture:
 
-**Accento** is a **production-ready AI backend service** that analyzes
-spoken English in YouTube videos and classifies the **speaker's accent**
-using machine learning.
+-   FastAPI (async) --- handles API requests\
+-   Celery workers (sync) --- performs ML processing\
+-   MongoDB + Redis --- persistence and caching
 
-The system is designed with a **scalable, asynchronous backend
-architecture**, enabling efficient processing of video audio using
-background workers.
-
-This backend is designed to power applications such as:
-
--   Chrome extensions that visually tag videos by accent
--   YouTube analytics tools
--   Speech and language research platforms
--   Content filtering systems
-
-The system combines modern backend infrastructure with machine learning
-inference to create a **high-performance video analysis pipeline**.
+This design enables instant API responses while heavy processing runs
+asynchronously.
 
 ------------------------------------------------------------------------
 
-# Key Capabilities
+## Key Capabilities
 
-| Capability | Description |
-|---|---|
-| Automatic Accent Detection | Detects English accents using deep learning speech models |
-| YouTube Audio Processing | Extracts audio from YouTube videos for analysis |
-| Language Detection | Automatically determines spoken language before accent classification |
-| Async Video Processing | Long-running ML tasks run in the background via Celery |
-| High Performance Caching | Redis prevents duplicate processing of previously analyzed videos |
-| Batch Processing | Analyze multiple videos in a single request |
-| Chrome Extension Integration | Designed to support browser extensions that visually filter YouTube content |
-------------------------------------------------------------------------
-
-# Architecture Overview
-
-    +-------------------+        +-------------------+
-    |    FastAPI API     | <----> |    MongoDB DB     |
-    | (REST Endpoints)   |        | (Accent Results)  |
-    +---------+---------+        +-------------------+
-              |
-              v
-        +-------------------+
-        | Celery Worker      |
-        | (Background Tasks) |
-        +---------+---------+
-                  |
-                  v
-            +-------------+
-            |   AI Models |
-            | Whisper +   |
-            | Wav2Vec2    |
-            +-------------+
-                  |
-                  v
-            +-------------+
-            |  Redis Cache |
-            +-------------+
-
-## Flow
-
-1.  Client sends video URL to FastAPI\
-2.  API checks Redis cache\
-3.  If not cached → check MongoDB\
-4.  If not processed → queue Celery task\
-5.  Worker downloads video audio\
-6.  Whisper detects language\
-7.  Wav2Vec2 predicts accent distribution\
-8.  Results stored in MongoDB\
-9.  Redis caches results for fast retrieval
+| Capability               | Description                                      |
+|--------------------------|--------------------------------------------------|
+| Accent Detection         | Classifies English accents using ONNX models     |
+| Language Detection       | Skips non-English audio early                    |
+| Live Stream Handling     | Skips live videos automatically                  |
+| Async Processing         | FastAPI + Celery architecture                    |
+| Redis Caching            | Prevents duplicate work                          |
+| MongoDB Storage          | Stores results and states                        |
+| Batch Processing         | Queue multiple videos                            |
+| Chrome Extension Ready   | Supports real-time filtering                     |
 
 ------------------------------------------------------------------------
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| API | FastAPI | Asynchronous REST API |
-| Database | MongoDB | NoSQL storage for analysis results |
-| Background Processing | Celery + Redis | Asynchronous ML processing |
-| ML Framework | PyTorch | Model inference |
-| Speech Models | Whisper + Wav2Vec2 | Language and accent detection |
-| Video Processing | yt-dlp | YouTube audio extraction |
-| Caching | Redis | Prevent duplicate work |
-| Containerization | Docker + Docker Compose | Multi-service orchestration |
-| Language | Python 3.10+ | Backend implementation |
+## Architecture Overview
+
+    FastAPI (async)
+       ↓
+    Redis (cache)
+       ↓
+    MongoDB (async)
+       ↓
+    Celery Worker (sync)
+       ↓
+    ML Pipeline (Whisper + Wav2Vec2 ONNX)
 
 ------------------------------------------------------------------------
 
-# Features
+## Processing Flow
 
-## Accent Classification
+1.  Client sends video URL\
+2.  API checks Redis\
+3.  If not found → checks MongoDB\
+4.  If not found → inserts status = "processing"\
+5.  Celery task is triggered
 
-Detects the most likely accent of a speaker in English speech.
+### Worker Steps
 
-### Supported Accents
+-   Re-checks Redis (cache hit shortcut)\
+-   Re-checks MongoDB (idempotency)\
+-   Fetches video metadata\
+-   Skips live streams\
+-   Downloads audio\
+-   Detects language\
+-   Skips non-English audio\
+-   Runs accent detection\
+-   Stores result in MongoDB\
+-   Caches result in Redis
 
-  Accent
-  ---------------
-  American
-  British
-  Indian
-  Australian
-  Canadian
-  Irish
-  South African
-  Other
+6.  Client re-requests result
 
-Each prediction returns:
+------------------------------------------------------------------------
 
--   Most probable accent
+## Processing States
+
+| Status     | Description                      |
+|------------|----------------------------------|
+| processing | Task is queued or running        |
+| done       | Successfully processed           |
+| error      | Processing failed                |
+
+------------------------------------------------------------------------
+
+## Special Cases
+
+### Live Streams
+
+``` json
+{
+  "status": "done",
+  "reason": "live_stream_skipped"
+}
+```
+
+### Non-English Audio
+
+``` json
+{
+  "status": "done",
+  "reason": "non_english"
+}
+```
+
+------------------------------------------------------------------------
+
+## Features
+
+### Accent Classification
+
+Detects the most likely accent of English speech.
+
+### Output Includes
+
+-   Predicted accent\
 -   Confidence score
--   Full probability distribution
+
+Full probability distribution is computed internally but not returned in
+API responses.
+
+### Example Response
+
+``` json
+{
+  "status": "done",
+  "url": "...",
+  "accent": "american",
+  "confidence": 0.82
+}
+```
 
 ------------------------------------------------------------------------
 
 ## Intelligent Processing Pipeline
 
-The system optimizes performance by:
+### Optimizations
 
-1.  Detecting spoken language first
-2.  Skipping accent detection for non-English videos
-3.  Processing only short audio segments (\~10 seconds)
-
-This significantly reduces compute requirements.
+-   Early Redis cache lookup\
+-   MongoDB fallback\
+-   Skip live videos\
+-   Skip non-English audio\
+-   Process only \~5 seconds of audio
 
 ------------------------------------------------------------------------
 
 ## Asynchronous ML Processing
 
-Heavy ML tasks are executed via **Celery workers**, ensuring the API
-remains responsive.
+    API → Queue → Worker → Store → Cache
 
-    API Request → Queue Task → Worker Processes → Store Result
-
-------------------------------------------------------------------------
-
-## Caching Layer
-
-Redis caching ensures previously analyzed videos return instantly.
-
-    Request → Redis Cache → MongoDB → Worker Processing
-
-This dramatically improves performance for repeated requests.
+-   API remains fast\
+-   Workers handle heavy ML tasks
 
 ------------------------------------------------------------------------
 
-# Folder Structure
+## Caching Strategy
+
+    Request → Redis → MongoDB → Worker
+
+-   Redis = fast lookup\
+-   MongoDB = persistent storage\
+-   Worker = fallback processing
+
+------------------------------------------------------------------------
+
+## Folder Structure
 
     accento/
     │
     ├── app/
-    │
     │   ├── api/
     │   │   └── routes/
     │   │       ├── detection.py
@@ -171,7 +175,8 @@ This dramatically improves performance for repeated requests.
     │   │   ├── cache.py
     │   │   ├── cache_sync.py
     │   │   ├── config.py
-    │   │   ├── database.py
+    │   │   ├── database_async.py
+    │   │   ├── database_sync.py
     │   │   └── logger.py
     │
     │   ├── models/
@@ -184,7 +189,8 @@ This dramatically improves performance for repeated requests.
     │   ├── services/
     │   │   ├── accent_service.py
     │   │   ├── language_service.py
-    │   │   └── youtube_service.py
+    │   │   ├── youtube_service.py
+    │   │   └── accent_model/
     │
     │   ├── tasks/
     │   │   └── video_processing.py
@@ -203,90 +209,53 @@ This dramatically improves performance for repeated requests.
 
 ------------------------------------------------------------------------
 
-# Setup & Running
+## Setup & Running
 
-## 1️⃣ Clone the Repository
+### 1️⃣ Clone
 
-    git clone https://github.com/your-username/accento.git
-    cd accento
+``` bash
+git clone https://github.com/mohammadJaliliTorkamani/accento
+cd accento
+```
 
-------------------------------------------------------------------------
+### 2️⃣ Environment Variables
 
-## 2️⃣ Configure Environment Variables
+``` env
+APP_NAME=yt-indian-detector
+ENV=development
+DEBUG=True
 
-Create `.env`
+MONGO_URL=mongodb://admin:admin123@mongo:27017/yt_detector?authSource=admin
+MONGO_DB=yt_detector
 
-    APP_NAME=accento
-    DEBUG=True
+REDIS_URL=redis://redis:6379/0
 
-    MONGO_URL=mongodb://admin:admin123@mongo:27017
-    MONGO_DB=accento
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-    REDIS_URL=redis://redis:6379
+TEMP_AUDIO_DIR=/tmp/audio
+ACCENT_THRESHOLD=0.6
+```
 
-    CELERY_BROKER_URL=redis://redis:6379/0
-    CELERY_RESULT_BACKEND=redis://redis:6379/0
+### 3️⃣ Run
 
-    ACCENT_THRESHOLD=0.6
-    TEMP_AUDIO_DIR=/tmp
-
-------------------------------------------------------------------------
-
-## 3️⃣ Start Services
-
-Run:
-
-    docker compose up --build
-
-This launches:
-
-| Service | Purpose |
-|---|---|
-| FastAPI | REST API |
-| Celery Worker | ML processing |
-| Redis | Task queue and caching |
-| MongoDB | Persistent storage |
+``` bash
+docker compose up --build
+```
 
 ------------------------------------------------------------------------
 
-# API Endpoints
+## API Endpoints
 
-## Health Check
+### Health
 
     GET /health
 
-Returns system status.
-
-------------------------------------------------------------------------
-
-## Detect Accent for a Video
+### Detect
 
     POST /detect
 
-Example request:
-
-``` json
-{
-  "url": "https://www.youtube.com/watch?v=example"
-}
-```
-
-Example response:
-
-``` json
-{
-  "accent": "american",
-  "confidence": 0.82,
-  "distribution": {
-    "american": 0.82,
-    "british": 0.07,
-    "indian": 0.03,
-    "australian": 0.02
-  }
-}
-```
-
-If processing is still running:
+Initial response:
 
 ``` json
 {
@@ -294,51 +263,51 @@ If processing is still running:
 }
 ```
 
-------------------------------------------------------------------------
-
-## Batch Detection
+### Batch Detection
 
     POST /detect/batch
 
-Example:
-
 ``` json
 {
-  "urls": [
-    "https://youtube.com/watch?v=1",
-    "https://youtube.com/watch?v=2"
-  ]
+  "url1": { "status": "processing" },
+  "url2": { "status": "processing" }
 }
 ```
 
-------------------------------------------------------------------------
-
-# Chrome Extension
-
-This backend is designed to support a **YouTube Chrome browser
-extension** that can:
-
--   Analyze videos on a YouTube page
--   Detect speaker accents
--   Visually tag videos with borders or labels
--   Allow users to filter content by accent
+Batch endpoint queues jobs only --- results must be fetched later.
 
 ------------------------------------------------------------------------
 
-# Future Improvements
+## Chrome Extension
 
-Potential enhancements include:
-
--   GPU acceleration for faster inference
--   Subtitle-based pre-analysis to reduce compute
--   User-configurable accent filters
--   Rate limiting and API authentication
--   Model upgrades for higher accuracy
--   Observability tools (Prometheus + Grafana)
--   Celery monitoring via Flower
+Supports a browser extension that: - Detects accents on YouTube pages\
+- Applies visual indicators (green/red borders)\
+- Filters videos based on user preferences
 
 ------------------------------------------------------------------------
 
-# License
+## Performance Optimizations
+
+-   Redis caching\
+-   MongoDB persistence\
+-   Early exit for live/non-English\
+-   Short audio (\~5 sec)\
+-   ONNX runtime for fast inference\
+-   Background workers
+
+------------------------------------------------------------------------
+
+## Future Improvements
+
+-   Return full probability distribution\
+-   GPU acceleration\
+-   Real-time streaming\
+-   Distributed workers\
+-   Observability (Prometheus + Grafana)\
+-   Authentication & rate limiting
+
+------------------------------------------------------------------------
+
+## License
 
 MIT License
