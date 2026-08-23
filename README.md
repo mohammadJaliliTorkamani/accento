@@ -6,6 +6,11 @@ time to a FastAPI API; Celery performs language and accent inference in the
 background, with Redis for queueing/global quota enforcement and MongoDB for
 short-lived results.
 
+Accento is open-source software created by [MJalili.com](https://mjalili.com). Source repository: [MJaliliT/accento](https://github.com/MJaliliT/accento).
+
+**Live demo:** [accento.mjalili.com](https://accento.mjalili.com)
+
+
 ## Production behavior
 
 - Single-video analysis with progress polling
